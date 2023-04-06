@@ -127,10 +127,10 @@ void Init_SPI(void){
 
 void mySPI_Thread (void const *argument) {
 	osEvent evt;
-	char tab[22+16];
+	char tab[24]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 octets eof 
 	int i, nb_led;
 	
-	for (i=0;i<4;i++){
+	for (i=0;i<4;i++){ // sof
 		tab[i] = 0;
 	}
 	
@@ -142,22 +142,14 @@ void mySPI_Thread (void const *argument) {
 			tab[7+nb_led*4]=0x00;
 			}
 
-		// 4 LED rouges
-		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[20+nb_led*4]=0xff;
-			tab[21+nb_led*4]=0x00;
-			tab[22+nb_led*4]=0x00;
-			tab[23+nb_led*4]=0xff;
-			}
+	for (i=0;i<4;i++){ //eof
+		tab[20+i] = 0;
+			 }	
 	
-		// end
-		tab[36] = 0;
-		tab[37] = 0;
-		
 	
   while (1) {
 		
-		Driver_SPI1.Send(tab,38);
+		Driver_SPI1.Send(tab,24);
     evt = osSignalWait(0x01, osWaitForever);	// sommeil fin emission
 		
 		osDelay(1000);
