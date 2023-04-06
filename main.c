@@ -40,21 +40,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "Board_LED.h"                  // ::Board Support:LED
+#include "Driver_SPI.h"                 // ::CMSIS Driver:SPI
 #include "cmsis_os.h"                   // ARM::CMSIS:RTOS:Keil RTX
 
-#include "Driver_SPI.h"
 #ifdef _RTE_
 #include "RTE_Components.h"             // Component selection
 #endif
 #ifdef RTE_CMSIS_RTOS2                  // when RTE component CMSIS RTOS2 is used
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #endif
-
-
-extern ARM_DRIVER_SPI Driver_SPI1;
-void mySPI_Thread (void const *argument);                             // thread function
-osThreadId tid_mySPI_Thread;                                          // thread id
-osThreadDef (mySPI_Thread, osPriorityNormal, 1, 0);                   // thread object
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
 /**
@@ -91,28 +85,75 @@ uint32_t HAL_GetTick (void) {
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern ARM_DRIVER_SPI Driver_SPI1;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 void Init_SPI(void);
+void mySPI_callback(uint32_t event);
 
+void mySPI_Thread (void const *argument);                             // thread function
+osThreadId tid_mySPI_Thread;                                          // thread id
+osThreadDef (mySPI_Thread, osPriorityNormal, 1, 0);                   // thread object
 
-
-
-
-//fonction de CB lancee si Event T ou R
-void mySPI_callback(uint32_t event)
+/* Private functions ---------------------------------------------------------*/
+/**
+  * @brief  Main program
+  * @param  None
+  * @retval None
+  */
+int main(void)
 {
-	switch (event) {
-		
-		
-		case ARM_SPI_EVENT_TRANSFER_COMPLETE  : 	 osSignalSet(tid_mySPI_Thread, 0x01);
-																							break;
-		
-		default : break;
-	}
+
+  /* STM32F4xx HAL library initialization:
+       - Configure the Flash prefetch, Flash preread and Buffer caches
+       - Systick timer is configured by default as source of time base, but user 
+             can eventually implement his proper time base source (a general purpose 
+             timer for example or other time source), keeping in mind that Time base 
+             duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
+             handled in milliseconds basis.
+       - Low Level Initialization
+     */
+  HAL_Init();
+
+  /* Configure the system clock to 168 MHz */
+  SystemClock_Config();
+  SystemCoreClockUpdate();
+
+  /* Add your application code here
+     */
+	LED_Initialize();
+	Init_SPI();	
+
+#ifdef RTE_CMSIS_RTOS2	// A commenter si utilisation RTOS
+  /* Initialize CMSIS-RTOS2 */
+  osKernelInitialize ();
+
+  /* Create thread functions that start executing, 
+  Example: osThreadNew(app_main, NULL, NULL); */
+	tid_mySPI_Thread = osThreadCreate (osThread(mySPI_Thread), NULL);
+  /* Start thread execution */
+  osKernelStart();
+#endif
+osDelay(osWaitForever);
+  /* Infinite loop */
+//  while (1)
+//  {
+//		LED_On (1);
+//		LED_On (2);
+//		LED_On (3);
+//		LED_On (0);
+//		
+//  }
 }
 
+/* Private functions ---------------------------------------------------------*/
+/**
+  * @brief  Initialize SPI Driver
+  * @param  None
+  * @retval None
+  */
 void Init_SPI(void){
 	Driver_SPI1.Initialize(mySPI_callback);
 	Driver_SPI1.PowerControl(ARM_POWER_FULL);
@@ -124,8 +165,13 @@ void Init_SPI(void){
 	Driver_SPI1.Control(ARM_SPI_CONTROL_SS, ARM_SPI_SS_INACTIVE);
 }
 
-
-void mySPI_Thread (void const *argument) {
+/* Private functions ---------------------------------------------------------*/
+/**
+  * @brief  Thread SPI Communication
+  * @param  None
+  * @retval None
+  */
+void mySPI_Thread (void const *argument){
 	osEvent evt;
 	char tab[24]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 octets eof 
 	int i, nb_led;
@@ -133,75 +179,47 @@ void mySPI_Thread (void const *argument) {
 	for (i=0;i<4;i++){ // sof
 		tab[i] = 0;
 	}
-	
-	// 4 LED bleues
+		
+		// 4 LED rouges
 		for (nb_led = 0; nb_led <4;nb_led++){
 			tab[4+nb_led*4]=0xff;
-			tab[5+nb_led*4]=0xff;
+			tab[5+nb_led*4]=0x00;
 			tab[6+nb_led*4]=0x00;
-			tab[7+nb_led*4]=0x00;
+			tab[7+nb_led*4]=0xff;
 			}
-
-	for (i=0;i<4;i++){ //eof
+	for (i=0;i<4;i++){ // eof
 		tab[20+i] = 0;
-			 }	
-	
+	}
+		
 	
   while (1) {
 		
 		Driver_SPI1.Send(tab,24);
     evt = osSignalWait(0x01, osWaitForever);	// sommeil fin emission
 		
-		osDelay(1000);
-			
+		osDelay(10);
 			
   }
+
 }
-
-
 
 /* Private functions ---------------------------------------------------------*/
 /**
-  * @brief  Main program
+  * @brief  SPI Callback
   * @param  None
   * @retval None
   */
-int main(void)
-{
+void mySPI_callback(uint32_t event){
+	switch (event) {
 		
-  /* STM32F4xx HAL library initialization:
-       - Configure the Flash prefetch, Flash preread and Buffer caches
-       - Systick timer is configured by default as source of time base, but user 
-             can eventually implement his proper time base source (a general purpose 
-             timer for example or other time source), keeping in mind that Time base 
-             duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
-             handled in milliseconds basis.
-       - Low Level Initialization
-     */
-  HAL_Init();
-	
-  /* Configure the system clock to 168 MHz */
-  SystemClock_Config();
-  SystemCoreClockUpdate();
+		case ARM_SPI_EVENT_TRANSFER_COMPLETE  : 	 
+			osSignalSet(tid_mySPI_Thread, 0x01);
+		break;
+		
+		default :
+			break;
+	}
 
-  /* Add your application code here
-     */
-	LED_Initialize();
-	Init_SPI();
-	NVIC_SetPriority(SPI1_IRQn,2);
-#ifdef RTE_CMSIS_RTOS2	// A commenter si utilisation RTOS
-  /* Initialize CMSIS-RTOS2 */
-  osKernelInitialize ();
-
-  /* Create thread functions that start executing, */
-	tid_mySPI_Thread = osThreadCreate (osThread(mySPI_Thread), NULL);
-  
-	/* Start thread execution */
-  osKernelStart();
-#endif
-	
-	
-	osDelay(osWaitForever);
 
 }
 
