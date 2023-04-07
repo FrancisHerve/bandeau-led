@@ -182,25 +182,25 @@ void mySPI_Thread (void const *argument){
 		
 		// 4 LED bleues  
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[4+nb_led*4]=0xff;
-			tab[5+nb_led*4]=0xff;
-			tab[6+nb_led*4]=0x00;
-			tab[7+nb_led*4]=0x00;
+			tab[4+nb_led*4]=0xff; //luminosité
+			tab[5+nb_led*4]=0xff; //couleur bleue 
+			tab[6+nb_led*4]=0x00; //couleur verte
+			tab[7+nb_led*4]=0x00; //couleur rouge
 			}
 
 		// 4 LED vertes
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[20+nb_led*4]=0xff;
-			tab[21+nb_led*4]=0x00;
-			tab[22+nb_led*4]=0xff;
-			tab[23+nb_led*4]=0x00;
+			tab[20+nb_led*4]=0xff; //luminosité
+			tab[21+nb_led*4]=0x00; //couleur bleue
+			tab[22+nb_led*4]=0xff; //couleur verte
+			tab[23+nb_led*4]=0x00; //couleur rouge
 			}
 		// 4 LED vertes
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[36+nb_led*4]=0xff;
-			tab[37+nb_led*4]=0x00;
-			tab[38+nb_led*4]=0xff;
-			tab[39+nb_led*4]=0x00;
+			tab[36+nb_led*4]=0xff; //luminosité
+			tab[37+nb_led*4]=0x00; //couleur bleue
+			tab[38+nb_led*4]=0xff; //couleur verte
+			tab[39+nb_led*4]=0x00; // couleur rouge
 			}
 			
 			
