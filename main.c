@@ -155,14 +155,18 @@ osDelay(osWaitForever);
   * @retval None
   */
 void Init_SPI(void){
+	/* Initialize the SPI driver */
 	Driver_SPI1.Initialize(mySPI_callback);
+	 /* Power up the SPI peripheral */
 	Driver_SPI1.PowerControl(ARM_POWER_FULL);
+	/* Configure the SPI to Master, 8-bit mode @1 MBits/sec */
 	Driver_SPI1.Control(ARM_SPI_MODE_MASTER | 
 											ARM_SPI_CPOL1_CPHA1 | 
-//											ARM_SPI_MSB_LSB | 
+//										ARM_SPI_MSB_LSB | 
 											ARM_SPI_SS_MASTER_UNUSED |
 											ARM_SPI_DATA_BITS(8), 1000000);
-	Driver_SPI1.Control(ARM_SPI_CONTROL_SS, ARM_SPI_SS_INACTIVE);
+	/* SS line = INACTIVE = HIGH */
+	//Driver_SPI1.Control(ARM_SPI_CONTROL_SS, ARM_SPI_SS_INACTIVE);
 }
 
 /* Private functions ---------------------------------------------------------*/
@@ -173,53 +177,50 @@ void Init_SPI(void){
   */
 void mySPI_Thread (void const *argument){
 	osEvent evt;
-	char tab[56]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 leds (4*4= 16 octets)+4 leds (4*4= 16 octets)+4 octets eof 
+	char tab[24]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 leds (4*4= 16 octets)+4 leds (4*4= 16 octets)+4 octets eof 
 	int i, nb_led;
 	
 	for (i=0;i<4;i++){ // sof
 		tab[i] = 0;
 	}
 		
-		// 4 LED bleues  
+		// 4 LED bleues 
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[4+nb_led*4]=0xff; //luminosité
-			tab[5+nb_led*4]=0xff; //couleur bleue 
-			tab[6+nb_led*4]=0x00; //couleur verte
-			tab[7+nb_led*4]=0x00; //couleur rouge
+			tab[4+nb_led*4]=0xff; // luminosité
+			tab[5+nb_led*4]=0xff; // couleur bleue
+			tab[6+nb_led*4]=0x00; // couleur verte
+			tab[7+nb_led*4]=0x00; // couleur rouge
 			}
-
-		// 4 LED vertes
+/*	
+			// 4 LED vertes
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[20+nb_led*4]=0xff; //luminosité
-			tab[21+nb_led*4]=0x00; //couleur bleue
-			tab[22+nb_led*4]=0xff; //couleur verte
-			tab[23+nb_led*4]=0x00; //couleur rouge
+			tab[20+nb_led*4]=0xff; // luminosité
+			tab[21+nb_led*4]=0x00; // couleur bleue
+			tab[22+nb_led*4]=0xff; // couleur verte
+			tab[23+nb_led*4]=0x00; // couleur rouge
 			}
-		// 4 LED vertes
+		// 4 LED rouges
 		for (nb_led = 0; nb_led <4;nb_led++){
-			tab[36+nb_led*4]=0xff; //luminosité
-			tab[37+nb_led*4]=0x00; //couleur bleue
-			tab[38+nb_led*4]=0xff; //couleur verte
-			tab[39+nb_led*4]=0x00; // couleur rouge
+			tab[36+nb_led*4]=0xff; // luminosité
+			tab[37+nb_led*4]=0x00; // couleur bleue
+			tab[38+nb_led*4]=0x00; // couleur verte
+			tab[39+nb_led*4]=0xff; // couleur rouge
 			}
 			
-			
+*/			
 	for (i=0;i<4;i++){ // eof
-		tab[52+i] = 0;
+		tab[20+i] = 0;
 	}
 		
 	
   while (1) {
-		
-		Driver_SPI1.Send(tab,56);
+		Driver_SPI1.Send(tab,24);
     evt = osSignalWait(0x01, osWaitForever);	// sommeil fin emission
-		
-		osDelay(10);
+	osDelay(1000);
 			
   }
 
 }
-
 /* Private functions ---------------------------------------------------------*/
 /**
   * @brief  SPI Callback
@@ -227,17 +228,11 @@ void mySPI_Thread (void const *argument){
   * @retval None
   */
 void mySPI_callback(uint32_t event){
-	switch (event) {
-		
-		case ARM_SPI_EVENT_TRANSFER_COMPLETE  : 	 
-			osSignalSet(tid_mySPI_Thread, 0x01);
-		break;
-		
-		default :
-			break;
-	}
-
-
+	if (event & ARM_SPI_EVENT_TRANSFER_COMPLETE) {
+    /* Transfer or receive is finished */
+		osSignalSet(tid_mySPI_Thread, 0x01);
+  }
+	
 }
 
 /**
