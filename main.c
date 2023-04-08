@@ -184,7 +184,7 @@ void mySPI_Thread (void const *argument){
 		tab[i] = 0;
 	}
 		
-		// 4 LED rouges 
+		// 4 LED bleues 
 		for (nb_led = 0; nb_led <4;nb_led++){
 			tab[4+nb_led*4]=0xff; // luminosité
 			tab[5+nb_led*4]=0xff; // couleur bleue
@@ -199,12 +199,12 @@ void mySPI_Thread (void const *argument){
 			tab[22+nb_led*4]=0xff; // couleur verte
 			tab[23+nb_led*4]=0x00; // couleur rouge
 			}
-		// 4 LED vertes
+		// 4 LED rouges
 		for (nb_led = 0; nb_led <4;nb_led++){
 			tab[36+nb_led*4]=0xff; // luminosité
 			tab[37+nb_led*4]=0x00; // couleur bleue
-			tab[38+nb_led*4]=0xff; // couleur verte
-			tab[39+nb_led*4]=0x00; // couleur rouge
+			tab[38+nb_led*4]=0x00; // couleur verte
+			tab[39+nb_led*4]=0xff; // couleur rouge
 			}
 			
 */			
