@@ -177,7 +177,7 @@ void Init_SPI(void){
   */
 void mySPI_Thread (void const *argument){
 	osEvent evt;
-	char tab[24]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 leds (4*4= 16 octets)+4 leds (4*4= 16 octets)+4 octets eof 
+	char tab[24]; // 4 octets de sof +4 leds (4*4= 16 octets) +4 octets eof 
 	int i, nb_led;
 	
 	for (i=0;i<4;i++){ // sof
